@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@loadable/component": "^5.13.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "dayjs": "^1.8.29",
+    "moment": "^2.27.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-google-login": "^5.1.21",
     "react-scripts": "3.4.1",
-    "recoil": "^0.0.10"
+    "recoil": "^0.0.10",
+    "swagger-ui-react": "^3.29.0"
   },
   "scripts": {
     "start": "react-scripts start",

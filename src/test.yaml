@@ -1,0 +1,783 @@
+openapi: 3.0.0
+info:
+  description: |
+    Just another product reader!!!
+    More detail on [Tiki docs](https://docs.tiki.com.vn/pages/viewpage.action?pageId=82576258).
+  title: janus-query
+  version: 'v1'
+servers:
+  - url: http://{environment}.tiki.services/{version}
+    variables:
+      environment:
+        enum:
+          - janus-query.dev # Uat
+          - janus-query # Prod
+        default: janus-query.dev
+      version:
+        enum:
+          - v1
+        default: v1
+
+tags:
+  - name: products
+    description: Query products and order by created time.
+paths:
+  /sc/products:
+    parameters:
+      - name: x-source
+        in: header
+        description: name of caller, which should be registed on [Tiki docs](https://docs.tiki.com.vn/pages/viewpage.action?pageId=82576258).
+        required: true
+        schema:
+          type: string
+      - name: order
+        in: query
+        description: Order by value of field, default by created_at. If in query conditions has name, order is first sorted by score.
+        required: false
+        schema:
+          $ref: '#/components/schemas/OrderField'
+      - name: direction
+        in: query
+        description: Order direction, default in descending order
+        required: false
+        schema:
+          $ref: '#/components/schemas/OrderDirection'
+
+    post:
+      tags:
+        - products
+      summary: Query products for sellercenter with authorization.
+      description: For seller user, query conditions must have seller_ids with one value, which is the same as seller id of token. For admin token, the above requirement is ignored.
+      operationId: queryProductsWithAuthor
+      parameters:
+        - name: Authorization
+          in: header
+          description: Token for authorization
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Limit number of returned product
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 128
+            default: 10
+        - name: cursor
+          in: query
+          description: Last cursor returned by server.
+          required: false
+          schema:
+            type: string
+        - name: include
+          in: query
+          description: Additional information should be included in response. By default, only product id should be returned.
+          required: false
+          schema:
+            $ref: '#/components/schemas/IncludeType'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Bad credentials
+      requestBody:
+        $ref: '#/components/requestBodies/QueryConditions'
+
+  /products:
+    parameters:
+      - name: x-source
+        in: header
+        description: name of caller, which should be registed on [Tiki docs](https://docs.tiki.com.vn/pages/viewpage.action?pageId=82576258).
+        required: true
+        schema:
+          type: string
+      - name: order
+        in: query
+        description: Order by value of field, default by created_at. If in query conditions has name, order is first sorted by score.
+        required: false
+        schema:
+          $ref: '#/components/schemas/OrderField'
+      - name: direction
+        in: query
+        description: Order direction, default in descending order
+        required: false
+        schema:
+          $ref: '#/components/schemas/OrderDirection'
+    get:
+      tags:
+        - products
+      summary: Query products by simple filter
+      operationId: getQueryProducts
+      parameters:
+        - name: limit
+          in: query
+          description: Limit number of returned product
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 128
+            default: 10
+        - name: cursor
+          in: query
+          description: Last cursor returned by server.
+          required: false
+          schema:
+            type: string
+        - name: include
+          in: query
+          description: Additional information should be included in response. By default, only product id should be returned.
+          required: false
+          schema:
+            $ref: '#/components/schemas/IncludeType'
+        - name: ids
+          in: query
+          description: list of product id.
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+            minItems: 1
+          explode: true
+        - name: skus
+          in: query
+          description: list of product sku.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            minItems: 1
+          explode: true
+        - name: categories
+          in: query
+          description: Filter products by list of categories.
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+            example: [4221, 1882]
+            minItems: 1
+          explode: true
+        - name: productset_ids
+          in: query
+          description: Filter products by list of productset id.
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+            example: [645, 761, 797]
+            minItems: 1
+          explode: true
+        - name: entity_type
+          in: query
+          description: Type of product
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ProductEntityType'
+            minItems: 1
+        - name: status
+          in: query
+          description: Type of product
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ProductStatus'
+            minItems: 1
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+        '400':
+          description: Invalid input
+    post:
+      tags:
+        - products
+      summary: Query products
+      operationId: postQueryProducts
+      parameters:
+        - name: limit
+          in: query
+          description: Limit number of returned product
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 128
+            default: 10
+        - name: cursor
+          in: query
+          description: Last cursor returned by server.
+          required: false
+          schema:
+            type: string
+        - name: include
+          in: query
+          description: Additional information should be included in response. By default, only product id should be returned.
+          required: false
+          schema:
+            $ref: '#/components/schemas/IncludeType'
+        - name: order
+          in: query
+          description: Order by value of field, default by created_at.
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderField'
+        - name: direction
+          in: query
+          description: Order direction, default in descending order
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderDirection'
+
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+        '400':
+          description: Invalid input
+      requestBody:
+        $ref: '#/components/requestBodies/QueryConditions'
+
+components:
+  schemas:
+    Product:
+      type: object
+      description: Product infomation
+      properties:
+        id:
+          type: integer
+        url_key:
+          type: string
+        availability:
+          type: integer
+        special_qty:
+          type: string
+        current_price:
+          type: integer
+        type:
+          type: string
+        created_at:
+          type: string
+        rating_summary:
+          type: integer
+        special_price:
+          type: string
+        productset_id:
+          type: integer
+        freegifts:
+          type: object
+          description: map of freegifts
+        list_price:
+          type: integer
+        master_sku:
+          type: string
+        master_id:
+          type: integer
+        rating_point:
+          type: integer
+        min_code:
+          type: string
+        thumbnail:
+          type: string
+        visibility:
+          type: integer
+        price:
+          type: integer
+        entity_type:
+          type: string
+        status:
+          type: integer
+        reviews_count:
+          type: integer
+        seller:
+          type: object
+          properties:
+            id:
+              type: integer
+            is_all_vat_supported:
+              type: integer
+            logo:
+              type: string
+            name:
+              type: string
+            store_id:
+              type: integer
+            vat_limit_supported:
+              type: integer
+            listdata_id:
+              type: integer
+            slug:
+              type: string
+            status:
+              type: integer
+        sku:
+          type: string
+        url_path:
+          type: string
+        quantity:
+          type: integer
+        updated_at:
+          type: string
+        brand:
+          type: object
+          properties:
+            status:
+              type: integer
+            thumbnail:
+              type: string
+            url_key:
+              type: string
+            value:
+              type: string
+            exclusive_seller_id:
+              type: integer
+            id:
+              type: integer
+            is_document_required:
+              type: integer
+            listdata_id:
+              type: integer
+
+        inventory:
+          type: object
+          properties:
+            qty_available:
+              type: integer
+            use_config_manage_stock:
+              type: integer
+            use_config_notify_stock_qty:
+              type: integer
+            can_be_purchased:
+              type: integer
+            inventory_type_id:
+              type: integer
+            product_id:
+              type: integer
+            use_config_max_sale_qty:
+              type: integer
+            qty:
+              type: integer
+            use_config_min_qty:
+              type: integer
+            is_in_stock:
+              type: integer
+            manage_stock:
+              type: integer
+            use_config_min_sale_qty:
+              type: integer
+            version:
+              type: integer
+            fulfillment_type:
+              type: string
+            id:
+              type: integer
+            min_qty:
+              type: integer
+
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              is_gallery:
+                type: integer
+              path:
+                type: string
+              position:
+                type: integer
+
+        category:
+          type: array
+          items:
+            type: object
+            properties:
+              parent_id:
+                type: integer
+              path:
+                type: string
+              include_in_menu:
+                type: integer
+              is_default:
+                type: integer
+              is_document_required:
+                type: integer
+              is_primary:
+                type: integer
+              level:
+                type: integer
+              name:
+                type: string
+              id:
+                type: integer
+              position:
+                type: integer
+              url_key:
+                type: string
+
+        supplier:
+          type: object
+          properties:
+            value:
+              type: string
+            id:
+              type: integer
+
+    IncludeType:
+      description: Additional information should be included in response. By default, only product id should be returned.
+      type: array
+      items:
+        type: string
+        enum:
+          - common
+          - inventory
+          - images
+          - categories
+          - supplier
+          - attributes
+
+    ProductsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        cursor:
+          type: string
+          example: '10'
+        total:
+          type: integer
+          format: int64
+          example: 100
+
+    ProductStatus:
+      description: |
+        Published status of product
+        - 1 : enable
+        - 2 : disable
+        - 3 : deleted
+      type: integer
+      items:
+        type: integer
+      enum:
+        - 1
+        - 2
+        - 3
+      example: 1
+
+    ProductEntityTypes:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProductEntityType'
+
+    ProductEntityType:
+      type: string
+      description: types of product.
+      enum:
+        - master_simple
+        - master_child
+        - master_configurable
+        - seller_simple
+        - master_virtual
+      example: 'master_simple'
+
+    OrderDirection:
+      type: string
+      description: the order direction
+      enum:
+        - desc
+        - asc
+      example: 'desc'
+
+    OrderField:
+      type: string
+      description: order by fields
+      enum:
+        - trend
+        - discount
+        - buy
+        - price
+        - created_at
+        - updated_at
+      example: 'buy'
+
+    FulfillmentType:
+      type: string
+      description: inventory fulfillment type.
+      enum:
+        - tiki_delivery
+        - seller_delivery
+        - instant_delivery
+        - tiki_delivery,instant_delivery
+        - cross_border
+        - dropship
+      example: 'tiki_delivery'
+
+    InventoryType:
+      type: integer
+      format: int32
+      minimum: 1
+      maximum: 5
+      description: |
+        Inventory type
+        - 1 : consignment
+        - 2 : preorder
+        - 3 : backorder
+        - 4 : upcoming
+        - 5 : discontinued
+    SupportType:
+      type: string
+      description: Support delivery type.
+      enum:
+        - 2h
+        - 24h
+      example: '2h'
+
+    ApprovalStatus:
+      type: string
+      description: Product's approval status.
+      enum:
+        - active
+        - review
+        - rejected
+      example: 'review'
+
+    QueryConditions:
+      description: Condition to filter product.
+      type: object
+
+      properties:
+        ids:
+          description: Return products specified by list of product IDs.
+          type: array
+          items:
+            maxLength: 128
+            type: integer
+            format: int64
+            description: Product id
+          example: [14421, 41234]
+
+        master_ids:
+          description: Return products specified by list of master product IDs.
+          type: array
+          items:
+            maxLength: 128
+            type: integer
+            format: int64
+            description: Product id
+          example: [2063157, 2056549]
+
+        name:
+          description: Filter products by name
+          type: string
+          example: 'iphone'
+
+        skus:
+          description: Return products specified by list of product SKU.
+          type: array
+          items:
+            maxLength: 128
+            type: string
+          example: ['5703462753105', '4650588921349']
+
+        master_skus:
+          description: Return products specified by list of master product SKU.
+          type: array
+          items:
+            maxLength: 128
+            type: string
+          example: ['2253448754631', '9932779373942']
+
+        seller_ids:
+          description: Filter products by list of product seller.
+          type: array
+          items:
+            maxLength: 128
+            type: integer
+          example: [1, 4]
+
+        entity_type:
+          description: Filter products by their type.
+          allOf:
+            - $ref: '#/components/schemas/ProductEntityTypes'
+
+        categories:
+          description: Filter products by list of categories.
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+            minItems: 1
+          example: [4221, 1882]
+
+        primary_category:
+          description: Filter products by primary category.
+          type: number
+          format: int32
+          example: 22102
+
+        productset_ids:
+          description: Filter products by list of productset id.
+          type: integer
+          items:
+            type: array
+            items:
+              type: integer
+            minItems: 1
+          example: [645, 761, 797]
+
+        status:
+          description: Filter products by their published status
+          allOf:
+            - $ref: '#/components/schemas/ProductStatus'
+
+        created_by:
+          description: Filter products by email of product creator.
+          type: string
+          example: admin@tiki.vn
+
+        brand_listdata_id:
+          description: Filter products by list of brand id.
+          type: array
+          items:
+            type: integer
+          example: [243341]
+
+        created_at_from:
+          description: Filter products created after date.
+          type: string
+          format: 'yyyy-MM-dd HH:mm:ss | yyyy-MM-dd'
+          example: '2019-12-02 16:22:19'
+
+        created_at_to:
+          description: Filter products created before date.
+          type: string
+          format: 'yyyy-MM-dd HH:mm:ss | yyyy-MM-dd'
+          example: '2019-12-02'
+
+        updated_at_from:
+          description: Filter products updated after date.
+          type: string
+          format: 'yyyy-MM-dd HH:mm:ss | yyyy-MM-dd'
+          example: '2019-12-02 16:22:19'
+
+        updated_at_to:
+          description: Filter products updated before date.
+          type: string
+          format: 'yyyy-MM-dd HH:mm:ss | yyyy-MM-dd'
+          example: '2019-12-02'
+
+        price_min:
+          description: Filter products that have price greater than or equal.
+          type: number
+          format: double
+          example: 100000.0
+
+        price_max:
+          description: Filter products that have price less than or equal.
+          type: number
+          format: double
+          example: 200000.0
+
+        seller_product_code:
+          description: Return product by seller product code.
+          type: string
+          example: 'SP321'
+
+        qty_available_min:
+          description: Filter products that have quantity greater than or equal.
+          type: number
+          format: int32
+          example: 1
+
+        qty_available_max:
+          description: Filter products that have quantity less than or equal.
+          type: number
+          format: int32
+          example: 0
+
+        blocked_days_min:
+          description: Filter blocked products that have duration greater than or equal. Infinity blocked products have blocked duration equals 2147483647.
+          type: number
+          minimum: 0
+          format: int32
+          example: 0
+
+        blocked_days_max:
+          description: Filter blocked products that have duration less than or equal. Infinity blocked products have blocked duration equals 2147483647.
+          type: number
+          format: int32
+          minimum: 0
+          example: 1
+
+        fulfillment_type:
+          description: Filter products by their fulfillment type.
+          allOf:
+            - $ref: '#/components/schemas/FulfillmentType'
+
+        inventory_type_id:
+          description: Filter products by their inventory type id.
+          allOf:
+            - $ref: '#/components/schemas/InventoryType'
+
+        supplier_listdata_id:
+          description: Filter products by their supplier id.
+          type: number
+          format: int32
+          example: 40608
+
+        approved_by:
+          description: Filter products by email of product approver.
+          type: string
+          example: admin@tiki.vn
+
+        support_type:
+          description: Filter products by their supported delivery type.
+          allOf:
+            - $ref: '#/components/schemas/SupportType'
+
+        approval_status:
+          description: Filter products by their approval status.
+          allOf:
+            - $ref: '#/components/schemas/ApprovalStatus'
+
+        merchant_id:
+          description: Filter products by their supplier id.
+          type: number
+          format: int32
+          example: 40608
+
+        created_by_seller:
+          description: Filter products, which created by seller id.
+          type: number
+          format: int32
+          example: 22102
+
+  requestBodies:
+    QueryConditions:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/QueryConditions'
+      description: Conditions for filter products
+      required: true
